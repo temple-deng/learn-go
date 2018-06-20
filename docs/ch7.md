@@ -7,6 +7,9 @@ Go 语言中接口类型的独特之处在于它是满足隐式实现的。也�
 类型定义所有满足的接口类型；简单地拥有一些必需的方法。这种设计可以让你创建一个新的接口类型
 满足已经存在的具体类型却不会去改变这些类型的定义。      
 
+相当于我们是根据各个不同的类型来定义它们都满足的接口类型，而不是先定义一个要求大家都满足
+的接口类型，再去实现各个具体的不同类型。   
+
 ## 7.1 接口约定
 
 目前为止，我们看到的类型都是具体的类型。一个具体的类型可以准确的描述它所代表的值并且展示
@@ -157,7 +160,7 @@ w = nil
 在 Go 语言中，变量总是被一个定义明确的值初始化，即使接口类型也不例外。对于一个接口的零值
 就是它的类型和值的部分都是 nil。    
 
-![nil-interface](https://github.com/temple-deng/learning-repo/tree/master/pics/nil-interface.png)     
+![nil-interface](https://github.com/temple-deng/learning-repo/blob/master/pics/nil-interface.png)     
 
 一个接口值基于它的动态类型被描述为空或非空，所以这是一个空的接口值。你可以通过使用 w==nil
 或者 w!=nil 来判断接口值是否为空。调用一个空接口值上的任意方法都会产生 panic:   
@@ -173,7 +176,7 @@ w = nil
 被设为 `*os.File` 指针的类型描述符，它的动态值持有 `os.Stdout` 的拷贝；这是一个代表
 处理标准输出的 `os.File` 类型变量的指针。     
 
-![os-file-interface](https://github.com/temple-deng/learning-repo/tree/master/pics/os-file-interface.png)     
+![os-file-interface](https://github.com/temple-deng/learning-repo/blob/master/pics/os-file-interface.png)     
 
 调用一个包含 `*os.File` 类型指针的接口值的 Write 方法，使得`(*os.File).Write` 方法被
 调用。这个调用输出"hello"。    

@@ -127,7 +127,7 @@ Go语言还提供了以下的bit位操作运算符，前面4个操作运算符�
 符号 | 描述 | 运算规则
 ---------|----------|---------
  & | 与 | 两个位都为1时，结果才为1
- `|` | 或 | 两个为都为0时，结果才为0
+ \| | 或 | 两个为都为0时，结果才为0
  ^ | 异或 | 两个位相同为0，相异为1
  ~ | 取反 | 
  `<<` | 左移 | 各二进制位全部左移若干位，高位丢弃，低位补0
@@ -207,15 +207,15 @@ Go 语言提供了两种精度的浮点数，`float32` 和 `float64`。它们的
 可以指定打印的宽度和控制打印精度。    
 
 ```go
-	for x := 0; x < 8; x++ {
-		fmt.Printf("x = %d e^x = %8.3f\n", x, math.Exp(float64(x)))
-	}
+ for x := 0; x < 8; x++ {
+  fmt.Printf("x = %d e^x = %8.3f\n", x, math.Exp(float64(x)))
+ }
 ```    
 
 上面代码打印e的幂，打印精度是小数点后三个小数精度和8个字符宽度。    
 
 math包中除了提供大量常用的数学函数外，还提供了IEEE754浮点数标准中定义的特殊值的
-创建和测试：正无穷大和负无穷大，分别用于表示太大溢出的数字和除零的结果；还有NaN
+创建和测试：正无穷大和负无穷大，分别用于表示太大溢出的数字和除以零的结果；还有NaN
 非数，一般用于表示无效的除法操作结果0/0或Sqrt(-1).       
 
 ```go
@@ -537,7 +537,7 @@ const (
 )
 ```      
 
-随着iota的递增,每个常量对应表达式1	<<	iota,是连续的2的幂,分别对应一个bit位置。使
+随着iota的递增,每个常量对应表达式1 << iota,是连续的2的幂,分别对应一个bit位置。使
 用这些常量可以用于测试、设置或清除对应的bit位的值。     
 
 ### 3.6.2 无类型常量
@@ -552,19 +552,19 @@ bit 的运算精度。这里有未明确类型的常量类型，分别是无类�
 math.Pi无类型的浮点数常量,可以直接用于任意需要浮点数或复数的地方:     
 
 ```go
-var	x	float32	=	math.Pi
-var	y	float64	=	math.Pi
-var	z	complex128	=	math.Pi
+var x float32 = math.Pi
+var y float64 = math.Pi
+var z complex128 = math.Pi
 ```      
 
 只有常量可以是无类型的。当一个无类型的常量被赋值给一个变量的时候，无类型的常量将会被隐
 式转换为对应的类型,如果转换合法的话。     
 
 ```go
-var	f	float64	=	3	+	0i	//	untyped	complex	->	float64
-f	=	2																		//	untyped	integer	->	float64
-f	=	1e123														//	untyped	floating-point	->	float64
-f	=	'a'																//	untyped	rune	->	float64
+var f float64 = 3 + 0i // untyped complex -> float64
+f = 2                  // untyped integer -> float64
+f = 1e123              // untyped floating-point -> float64
+f = 'a'                // untyped rune -> float64
 ```      
 
 这个例子的意思是把字面值也当成常量了把。     
@@ -573,14 +573,14 @@ f	=	'a'																//	untyped	rune	->	float64
 点数和复数,可能会有舍入处理：    
 
 ```go
-const	(
-  deadbeef	=	0xdeadbeef	//	untyped	int	with	value	3735928559
-  a	=	uint32(deadbeef)		//	uint32	with	value	3735928559
-  b	=	float32(deadbeef)	//	float32	with	value	3735928576	(rounded	up)
-  c	=	float64(deadbeef)	//	float64	with	value	3735928559	(exact)
-  d	=	int32(deadbeef)			//	compile	error:	constant	overflows	int32
-  e	=	float64(1e309)				//	compile	error:	constant	overflows	float64
-  f	=	uint(-1)										//	compile	error:	constant	underflows	uint
+const (
+  deadbeef = 0xdeadbeef // untyped int with value 3735928559
+  a = uint32(deadbeef)  // uint32 with value 3735928559
+  b = float32(deadbeef) // float32 with value 3735928576 (rounded up)
+  c = float64(deadbeef) // float64 with value 3735928559 (exact)
+  d = int32(deadbeef)   // compile error: constant overflows int32
+  e = float64(1e309)    // compile error: constant overflows float64
+  f = uint(-1)          // compile error: constant underflows uint
 )
 ```     
 
@@ -588,10 +588,10 @@ const	(
 为默认的变量类型,就像下面的例子:     
 
 ```go
-i	:=	0						//	untyped	integer;								implicit	int(0)
-r	:=	'\000'	//	untyped	rune;											implicit	rune('\000')
-f	:=	0.0				//	untyped	floating-point;	implicit	float64(0.0)
-c	:=	0i					//	untyped	complex;								implicit	complex128(0i)
+i := 0      // untyped integer;        implicit int(0)
+r := '\000' // untyped rune;           implicit rune('\000')
+f := 0.0    // untyped floating-point; implicit float64(0.0)
+c := 0i     // untyped complex;        implicit complex128(0i)
 ```     
 
 注意默认类型是规则的:无类型的整数常量默认转换为int,对应不确定的内存大小,但是浮
