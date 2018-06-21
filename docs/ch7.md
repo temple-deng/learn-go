@@ -391,4 +391,34 @@ switch x.(type) {
 }
 ```      
 
-类型开关语句有一个扩展的形式，它可以将提取的值绑定到一个
+类型开关语句有一个扩展的形式，它可以将提取的值绑定到一个在每个 `case` 范围内的新变量。    
+
+```go
+switch x := x.(type) {
+  //
+}
+```     
+
+和一个 `switch` 语句相似地，一个类型开关隐式的创建了一个语言块，因此新变量 `x` 是定义不
+会和外面块中的 `x` 变量冲突。每个 `case` 也会隐式的创建一个单独的语言块。     
+
+```go
+func sqlQuota(x interface{}) string {
+  switch x := x.(type) {
+    case nil:
+      return "NULL"
+    case int, uint:
+      return fmt.Sprintf("%d", x)
+    case bool:
+      if x {
+        return "TRUE"
+      }
+      return "FALSE"
+    case string:
+      return sqlQuoteString(x)
+    default:
+      panic(fmt.Sprintf("unexpected type %T: %v", x, x))
+  }
+}
+```     
+
