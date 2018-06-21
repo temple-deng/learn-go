@@ -14,6 +14,7 @@
     - [4.4.3 结构体嵌入和匿名成员](#443-结构体嵌入和匿名成员)
     - [4.4.4 数组、结构体、slice、map 比较](#444-数组结构体slicemap-比较)
   - [4.5 JSON](#45-json)
+  - [4.6 文本和 HTML 模板](#46-文本和-html-模板)
 
 <!-- /TOC -->
 
@@ -617,12 +618,188 @@ fmt.Printf("%s\n", data)
 ]
 ```     
 
+一个 JSON 数组可以通过将 Go 语言的数组和 slice编码得到。JSON 的对象类型可以通过 Go
+语言的 map 类型（key类型是字符串）和结构体编码得到。     
+
+在编码结构体时，默认使用 Go 语言结构体的成员名字作为 JSON 对象的键名。只有导出的
+结构体成员才会被解码，也就是说只有大写字母开头的成员名字才会被 JSON 编码把。    
+
 细心的读者可能已经注意到，其中Year名字的成员在编码后变成了released，还有Color成员
 编码后变成了小写字母开头的color。这是因为结构体成员Tag所导致的。一个结构体成员Tag是和
 在编译阶段关联到该成员的元信息字符串：    
 
-```
+```go
 Year int `json:"released"`
 Color bool `json:"color, omitempty"`
 ```     
 
+结构体的成员 Tag 可以是任意的字符串字面值，但是通常是一系列用空格分隔的key: "value"
+键值对序列；因为值中含有双引号字符，因此成员 Tag 一般用原生字符串字面值的形式书写。
+json 开头键名对应的值用于控制 encoding/json 包的编码和解码的行为，并且 encoding
+下其他的包也遵循这个约定。   
+
+成员 Tag 中 json 对应值的第一部分用于指定 JSON 字段的名字，比如将 Go 语言中的
+TotalCount 成员对应到 JSON 中的 total_count 字段。Color 成员的 Tag 还带了
+一个额外的 omitempty 选项，表示当 Go 语言结构体成员为空或零值时不生成 JSON
+字段。     
+
+编码的逆操作是解码，对应将 JSON 数据解码为 Go 语言的数据结构，Go 语言中一般叫
+unmarshaling，通过 json.Unmarshal 函数完成。通过定义合适的 Go 语言数据结构，我们
+可以选择性地解码 JSON 中感兴趣的成员。当 Unmarshal 函数调用返回，slice 将被只含有
+Title 信息值填充，其他 JSON 成员将被忽略。     
+
+```go
+var titles []struct{ Title string }
+err := json.Unmarshal(data, &titles)
+
+if err != nil {
+  log.Fatalf("JSON unmarshaling failed: %s", err)
+}
+
+fmt.Println(titles)   // [{Casablanca} {Cool Hand Luke} {Bullitt}]
+```     
+
+```go
+package github
+
+import (
+	"time"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+)
+
+const IssuesURL = "https://api.github.com/search/issues"
+
+type IssuesSearchResult struct {
+	TotalCount  int  `json:"total_count"`
+	Items				[]*Issue
+}
+
+type Issue struct {
+	Number 		int
+	HTMLURL		string  `json:"html_url"`
+	Title     string
+	State			string
+	User			*User
+	CreatedAt time.Time `json:"created_at"`
+	Body			string
+}
+
+type User struct {
+	Login		string
+	HTMLURL string  `json:"html_url"`
+}
+
+func SearchIssues(terms []string) (*IssuesSearchResult, error) {
+	q := url.QueryEscape(strings.Join(terms, " "))
+	resp, getErr := http.Get(IssuesURL + "?q=" + q)
+	if getErr != nil {
+		return nil, getErr
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("search query failed: %s", resp.Status)
+	}
+
+	var result IssuesSearchResult
+	parseErr := json.NewDecoder(resp.Body).Decode(&result)
+	if parseErr != nil {
+		resp.Body.Close()
+		return nil, parseErr
+	}
+
+	resp.Body.Close()
+	return &result, nil
+}
+```     
+
+在早些的例子中，我们使用了 json.Unmarshal 函数来将 JSON 格式的字符串解码为字节
+slice。但是在这个例子中，我们使用了基于流式的解码器 json.Decoder，它可以从一个
+输入流解码 JSON 数据，尽管这不是必须的。     
+
+## 4.6 文本和 HTML 模板
+
+text/template 和 html/template 等模板包提供了一种将变量值填充到一个文本或 HTML
+格式的模板的机制。     
+
+一个模板是一个字符串或一个文件，里面包含了一个或多个由双花括号包含的 `{{action}}`
+对象。大部分的字符串只是按字面值打印，但是对于 actions 部分将触发其他的行为。每个
+actions 都包含了一个用模板语言书写的表达式，一个 action 虽然简短但是可以输出复杂的
+打印值，模板语言包含通过选择结构体的成员、调用函数或方法、表达式控制流和 range 循环
+语句，以及其他实例化模板等诸多特性。      
+
+```go
+const templ = `{{ .TotalCount }} issues:
+{{ range .Items }}-------------------------
+Number:  {{ .Number }}
+User:    {{ .User.Login }}
+Title:   {{ .Title | printf "%.64s" }}
+Age:     {{ .CreatedAt | daysAgo }} days
+{{ end }}`
+```    
+
+对于每一个action，都有一个当前值的概念，对应点操作符。当前值最初被初始化为调用模板时
+的参数，在当前例子中对应 github.IssuesSearchResult 类型的变量。模板中
+`{{range .Items}}` 和 `{{end}}` 对应一个循环 action，循环每次迭代的当前中对应
+当前的 Items 元素的值。     
+
+在一个 action 中， `|` 操作符表示将前一个表达式的结果作为后一个函数的输入。在 Title
+这一行的 action 中，第二个操作是一个 `printf` 函数，是一个基于 `fmt.Sprintf` 实现
+的内置函数，所有模板都可以直接使用。对于 Age 部分，第二个动作是一个叫 `daysAgo` 的
+函数，通过 `time.Slice` 函数将 `CreatedAt` 转换为过去的时间长度：    
+
+```go
+func daysAgo(t time.Time) int {
+	return int(time.Slice(t).Hours() / 24)
+}
+```       
+
+生成模板输出需要两个处理步骤。第一步是要分析模板并转为内部表示，然后基于指定的输入执行模板。分析
+模板部分一般只需要执行一次。下面的代码创建并分析上面定义的模板 templ。注意方法调用链的顺序：
+`template.New` 先创建并返回一个模板；Funcs 方法将 daysAgo 等自定义函数注册到模板中，并返回
+模板；最后调用 Parse 函数分析模板。     
+
+```go
+report, err := template.New("report").
+	Funcs(template.FuncMap{"daysAgo": daysAgo}).
+	Parse(templ)
+if err != nil {
+	log.Fatal(err)
+}
+```     
+
+生成模板输出需要两个处理步骤。第一步是要分析模板并转为内部表示，然后基于指定的输入执行模板。分析
+模板部分一般只需要执行一次。下面的代码创建并分析上面定义的模板 templ。注意方法调用链的顺序：
+`template.New` 先创建并返回一个模板；Funcs 方法将 daysAgo 等自定义函数注册到模板中，并返回
+模板；最后调用 Parse 函数分析模板。     
+
+```go
+report, err := template.New("report").
+	Funcs(template.FuncMap{"daysAgo": daysAgo}).
+	Parse(templ)
+if err != nil {
+	log.Fatal(err)
+}
+```     
+
+```go
+var report = template.Must(template.New("issuelist").
+	Funcs(template.FuncMap{"daysAgo": daysAgo}).
+	Parse(templ))
+
+func main() {
+	result, err := github.SearchIssues(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = report.Execute(os.Stdout, result)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+```    
