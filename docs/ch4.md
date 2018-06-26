@@ -179,6 +179,12 @@ make([]T, len, cap)
 
 在底层，`make` 创建了一个匿名的数组变量，然后返回一个 slice。       
 
+来看一下我们目前知道创建 slice 的方法：   
+
++ 通过字面量直接声明一个 slice
++ 通过 `make` 函数
++ 通过切割 slicing 一个数组或 slice    
+
 ### 4.2.1 append 函数
 
 内置的append 函数用于向 slice 追加元素：    
@@ -235,6 +241,33 @@ x = append(x, 2, 3)
 x = append(x, 4, 5, 6)
 x = append(x, x...)
 ```      
+
+需要注意的是，当 append 操作后的 slice 的容量没有超过底层数组的容量时，append 操作是会修改
+底层数据的：     
+
+```go
+primes := [6]int{2, 3, 5, 7, 11, 13}
+
+var s []int = primes[1:4]
+s = append(s, 8, 9)
+fmt.Println(s)        // [3, 5, 7, 8, 9]
+fmt.Println(primes)   // [2, 3, 5, 7, 8, 9]
+```    
+
+当时当 append 操作导致内存的重新分配，那么其操作就不再影响之前的数组了：　　　　
+
+```go
+primes := [6]int{2, 3, 5, 7, 11, 13}
+
+var s []int = primes[1:4]
+s = append(s, 8, 9, 10)
+fmt.Println(s)         // [3, 5, 7, 8, 9, 10]
+fmt.Println(primes)    // [2, 3, 5, 7, 11, 13]
+```   
+
+当重新分配内存后，slice 的容量是不确定的，并不会只是简单的与长度相等，通常可能会更长一些，以免
+下次进行 append 操作时又要分配内存操作。    
+
 
 ### 4.2.2 slice 内存技巧
 
