@@ -129,5 +129,4 @@ goroutine。
 go 的调度器使用了一个叫做 GOMAXPROCS 的变量来决定会有多少个操作系统的线程同时执行 Go 的代码。
 其默认值是 CPU 的核心数。    
 
-### 9.8.4 goroutine 没有 ID 号
 
