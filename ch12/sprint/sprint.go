@@ -4,11 +4,11 @@ import (
 	"strconv"
 )
 
-func Sprint(x interface{}) string {
-	type stringer interface {
-		String() string
-	}
+type stringer interface {
+	String() string
+}
 
+func Sprint(x interface{}) string {
 	switch x := x.(type) {
 	case stringer:
 		return x.String()
